@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="org.example.ThemeCreatorView"
+      alignment="TOP_CENTER" spacing="20" style="-fx-padding: 20; -fx-background-color: #f4f4f4;">
+
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <Label text="Назва теми" style="-fx-font-size: 14;"/>
+        <TextField fx:id="themeNameField" prefWidth="300"/>
+        <Button text="Назад" onAction="#onBack" style="-fx-background-color: #ccc;"/>
+    </HBox>
+
+    <VBox spacing="10" alignment="CENTER">
+        <Label text="Слово" style="-fx-font-weight: bold;"/>
+        <TextField fx:id="wordField" promptText="Введіть слово"/>
+
+        <Label text="Підказка" style="-fx-font-weight: bold;"/>
+        <TextField fx:id="hintField" promptText="Введіть підказку"/>
+
+        <VBox fx:id="hintsContainer" spacing="5">
+            <Label text="Жаба – Земноводна істота, що стрибає та квакає у водоймах."/>
+            <Label text="Ящірка – Швидкий плазун, що може втратити хвіст, але не втратить спритність."/>
+            <Label text="Змія – Безногий хижак, що рухається ковзким способом і полює на здобич."/>
+        </VBox>
+    </VBox>
+
+    <HBox spacing="20" alignment="CENTER">
+        <Button text="Імпортувати файл" style="-fx-pref-width: 180;"/>
+        <Button text="Зберегти" onAction="#onSave" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-pref-width: 180;"/>
+    </HBox>
+</VBox>

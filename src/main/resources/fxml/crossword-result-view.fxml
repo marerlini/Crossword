@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="org.example.CrosswordResultView"
+      alignment="TOP_CENTER" spacing="20" style="-fx-padding: 20; -fx-background-color: #f4f4f4;">
+
+    <HBox alignment="CENTER_RIGHT">
+        <Button text="Назад" onAction="#onBack" style="-fx-background-color: #ccc;"/>
+    </HBox>
+
+    <!-- Кросворд сітка -->
+    <HBox alignment="CENTER" spacing="5">
+        <VBox spacing="5">
+            <HBox spacing="2">
+                <Label text="1" style="-fx-font-weight: bold; -fx-text-fill: blue;"/>
+                <Label text="Я" style="-fx-border-color: black; -fx-border-width: 1; -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: CENTER;"/>
+                <Label text="щ" style="-fx-border-color: black; -fx-border-width: 1; -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: CENTER;"/>
+                <Label text="і" style="-fx-border-color: black; -fx-border-width: 1; -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: CENTER;"/>
+                <Label text="р" style="-fx-border-color: black; -fx-border-width: 1; -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: CENTER;"/>
+                <Label text="к" style="-fx-border-color: black; -fx-border-width: 1; -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: CENTER;"/>
+                <Label text="а" style="-fx-border-color: black; -fx-border-width: 1; -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: CENTER;"/>
+            </HBox>
+            <HBox spacing="2">
+                <Label text="я" style="-fx-border-color: black; -fx-border-width: 1; -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: CENTER;"/>
+            </HBox>
+        </VBox>
+
+        <VBox spacing="5">
+            <Label text="2" style="-fx-font-weight: bold; -fx-text-fill: blue;"/>
+            <VBox spacing="2">
+                <Label text="3" style="-fx-font-weight: bold; -fx-text-fill: blue;"/>
+                <Label text="М" style="-fx-border-color: black; -fx-border-width: 1; -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: CENTER;"/>
+            </VBox>
+        </VBox>
+
+        <VBox spacing="5">
+            <Label text="3" style="-fx-font-weight: bold; -fx-text-fill: blue;"/>
+            <VBox spacing="2">
+                <Label text="Ж" style="-fx-border-color: black; -fx-border-width: 1; -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: CENTER;"/>
+                <Label text="б" style="-fx-border-color: black; -fx-border-width: 1; -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: CENTER;"/>
+                <Label text="а" style="-fx-border-color: black; -fx-border-width: 1; -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: CENTER;"/>
+            </VBox>
+        </VBox>
+    </HBox>
+
+    <Button text="Показати відповіді" style="-fx-pref-width: 200;"/>
+    <Button text="Перегенерувати" style="-fx-pref-width: 200;"/>
+    <Button text="Зберегти" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-pref-width: 200;"/>
+
+    <!-- Підказки -->
+    <VBox spacing="10" style="-fx-padding: 10; -fx-border-color: #ddd; -fx-border-width: 1;">
+        <Label text="По горизонталі:" style="-fx-font-weight: bold;"/>
+        <Label text="1) Безногий хижак, що рухається ковзким способом і полює на здобич." wrapText="true"/>
+
+        <Label text="По вертикалі:" style="-fx-font-weight: bold;"/>
+        <Label text="2) Швидкий плазун, що може втратити хвіст, але не втратить спритність." wrapText="true"/>
+        <Label text="3) Земноводна істота, що стрибає та квакає у водоймах." wrapText="true"/>
+    </VBox>
+</VBox>
