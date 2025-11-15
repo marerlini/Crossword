@@ -1,57 +1,64 @@
 package org.example;
 
 import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.example.service.DatabaseService;
 import org.example.view.DataPageView;
-import org.example.view.InputPageView;
+import org.example.view.InputPageController;
+
+import java.io.IOException;
 
 public class Main extends Application {
 
     private Stage primaryStage;
     private Scene mainScene, dataScene;
-
     private DatabaseService dbService;
-    private DataPageView dataPageView; // Потрібен доступ для оновлення
+    private DataPageView dataPageView;
 
     @Override
     public void start(Stage stage) {
         this.primaryStage = stage;
-
-        // 1. Створюємо наш сервіс даних
         this.dbService = new DatabaseService();
 
-        // 2. Створюємо класи-глядачі (View)
-        // Ми передаємо їм сервіс (щоб вони могли зберігати/завантажувати)
-        // і "дію" (щоб вони могли просити переключити сцену)
-        InputPageView inputView = new InputPageView(dbService, this::showDataPage);
+        try {
+            // Завантажуємо FXML
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(getClass().getResource("/org.example.view/input-page-view.fxml"));
+            Parent inputPageRoot = loader.load();
 
-        this.dataPageView = new DataPageView(dbService, this::showMainPage);
+            // Отримуємо контролер
+            InputPageController inputController = loader.getController();
+            inputController.setDependencies(dbService, this::showDataPage);
 
-        // 3. Створюємо сцени з розміток, які повернули наші View
-        mainScene = new Scene(inputView.getLayout(), 350, 250);
-        dataScene = new Scene(dataPageView.getLayout(), 350, 400);
+            mainScene = new Scene(inputPageRoot, 350, 250);
 
-        // 4. Запускаємо
-        primaryStage.setTitle("JavaFX + H2 БД (Розділено)");
-        primaryStage.setScene(mainScene);
-        primaryStage.show();
+            // Сторінка 2
+            this.dataPageView = new DataPageView(dbService, this::showMainPage);
+            dataScene = new Scene(dataPageView.getLayout(), 350, 400);
+
+            primaryStage.setTitle("JavaFX + FXML + H2");
+            primaryStage.setScene(mainScene);
+            primaryStage.show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Не вдалося знайти FXML-файл. Перевірте шлях: /org/example/view/input-page-view.fxml");
+        }
     }
-
-    // --- Методи для навігації ---
 
     private void showMainPage() {
         primaryStage.setScene(mainScene);
     }
 
     private void showDataPage() {
-        // Оновлюємо дані КОЖЕН РАЗ, коли переходимо на сторінку
-        dataPageView.refreshData();
+        dataPageView = new DataPageView(dbService, this::showMainPage); // оновлюємо
+        dataScene = new Scene(dataPageView.getLayout(), 350, 400);
         primaryStage.setScene(dataScene);
     }
 
-    // Точка входу
     public static void main(String[] args) {
         launch(args);
     }
