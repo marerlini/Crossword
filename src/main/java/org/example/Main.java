@@ -7,7 +7,6 @@ import org.example.service.DatabaseService;
 import org.example.view.DataPageView;
 import org.example.view.InputPageView;
 
-// Змінив ім'я з Main на MainApp, щоб було зрозуміліше
 public class Main extends Application {
 
     private Stage primaryStage;
