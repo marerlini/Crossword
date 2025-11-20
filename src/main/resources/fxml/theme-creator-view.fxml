@@ -2,36 +2,55 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.layout.HBox?>
 
-<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="org.example.ThemeCreatorView"
-      alignment="TOP_CENTER" spacing="20" style="-fx-padding: 20; -fx-background-color: #f4f4f4;">
+<GridPane alignment="CENTER_LEFT" hgap="20" vgap="10"
+          xmlns="http://javafx.com/javafx/25"
+          xmlns:fx="http://javafx.com/fxml/1"
+          fx:controller="org.example.ThemeCreatorView">
 
-    <HBox alignment="CENTER_LEFT" spacing="10">
-        <Label text="Назва теми" style="-fx-font-size: 14;"/>
-        <TextField fx:id="themeNameField" prefWidth="300"/>
-        <Button text="Назад" onAction="#onBack" style="-fx-background-color: #ccc;"/>
-    </HBox>
+    <columnConstraints>
+        <ColumnConstraints hgrow="SOMETIMES" percentWidth="50.0" />
+        <ColumnConstraints hgrow="SOMETIMES" percentWidth="50.0" />
+    </columnConstraints>
 
-    <VBox spacing="10" alignment="CENTER">
-        <Label text="Слово" style="-fx-font-weight: bold;"/>
-        <TextField fx:id="wordField" promptText="Введіть слово"/>
+    <rowConstraints>
+        <RowConstraints minHeight="10.0" vgrow="ALWAYS" />
+    </rowConstraints>
 
-        <Label text="Підказка" style="-fx-font-weight: bold;"/>
-        <TextField fx:id="hintField" promptText="Введіть підказку"/>
+    <children>
+        <VBox spacing="10" GridPane.columnIndex="0">
+            <children>
+                <TextField fx:id="themeNameField" maxWidth="Infinity" text="Назва теми" />
+                <TextField fx:id="wordField" maxWidth="Infinity" promptText="Введіть слово" text="Слово" />
+                <TextField fx:id="hintField" maxWidth="Infinity" promptText="Введіть підказку" text="Підказка" />
 
-        <VBox fx:id="hintsContainer" spacing="5">
-            <Label text="Жаба – Земноводна істота, що стрибає та квакає у водоймах."/>
-            <Label text="Ящірка – Швидкий плазун, що може втратити хвіст, але не втратить спритність."/>
-            <Label text="Змія – Безногий хижак, що рухається ковзким способом і полює на здобич."/>
+                <ListView fx:id="wordList" maxWidth="Infinity" VBox.vgrow="ALWAYS" />
+            </children>
         </VBox>
-    </VBox>
 
-    <HBox spacing="20" alignment="CENTER">
-        <Button text="Імпортувати файл" style="-fx-pref-width: 180;"/>
-        <Button text="Зберегти" onAction="#onSave" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-pref-width: 180;"/>
-    </HBox>
-</VBox>
+        <VBox alignment="CENTER" GridPane.columnIndex="1">
+            <children>
+                <Button onAction="#onBack" maxWidth="Infinity" style="-fx-background-color: #ccc;" text="Назад" />
+
+                <Region VBox.vgrow="ALWAYS" />
+
+                <Button maxWidth="Infinity" text="Імпортувати файл" />
+
+                <Region VBox.vgrow="ALWAYS" />
+
+                <Button onAction="#onSave" maxWidth="Infinity" style="-fx-background-color: #4CAF50; -fx-text-fill: white;" text="Зберегти" />
+            </children>
+        </VBox>
+    </children>
+
+    <padding>
+        <Insets bottom="20" left="20" right="20" top="20" />
+    </padding>
+</GridPane>
