@@ -41,8 +41,7 @@
 
                 <Region VBox.vgrow="ALWAYS" />
 
-                <Button maxWidth="Infinity" text="Імпортувати файл" />
-
+                <Button fx:id="importButton" onAction="#onImport" maxWidth="Infinity" text="Імпортувати файл" />
                 <Region VBox.vgrow="ALWAYS" />
 
                 <Button onAction="#onSave" maxWidth="Infinity" style="-fx-background-color: #4CAF50; -fx-text-fill: white;" text="Зберегти" />
