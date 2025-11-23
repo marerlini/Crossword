@@ -27,10 +27,10 @@
     <children>
         <VBox spacing="10" GridPane.columnIndex="0">
             <children>
-                <TextField fx:id="themeNameField" maxWidth="Infinity" text="Назва теми" />
-                <TextField fx:id="wordField" maxWidth="Infinity" promptText="Введіть слово" text="Слово" />
-                <TextField fx:id="hintField" maxWidth="Infinity" promptText="Введіть підказку" text="Підказка" />
-
+                <TextField fx:id="themeNameField" maxWidth="Infinity" promptText="Назва теми" />
+                <TextField fx:id="wordField" maxWidth="Infinity" promptText="Введіть слово" />
+                <TextField fx:id="hintField" maxWidth="Infinity" promptText="Введіть підказку" />
+                <Button fx:id="addButton" onAction="#onAddWord" maxWidth="Infinity" text="Додати" />
                 <ListView fx:id="wordList" maxWidth="Infinity" VBox.vgrow="ALWAYS" />
             </children>
         </VBox>

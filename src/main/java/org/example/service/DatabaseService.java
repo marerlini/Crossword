@@ -1,7 +1,7 @@
 package org.example.service;
 
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import org.example.ThemeCreatorView;
 
 import java.sql.*;
 
@@ -14,52 +14,82 @@ public class DatabaseService {
 
     // Конструктор: при створенні сервісу одразу перевіряємо таблицю
     public DatabaseService() {
-        createTable();
+        createTables();
     }
 
-    // === Створення таблиці ===
-    private void createTable() {
+    // === Створення таблиць ===
+    private void createTables() {
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
              Statement stmt = conn.createStatement()) {
-            String sql = "CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255))";
-            stmt.execute(sql);
-            System.out.println("Таблиця готова. Файл: ~/javafx_h2_db.mv.db");
+
+            // 1. Створюємо таблицю ТЕМ (topics)
+            // id - унікальний номер теми
+            // name - назва теми (наприклад, "Фрукти")
+            String sqlTopics = "CREATE TABLE IF NOT EXISTS topics (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                    "name VARCHAR(255) NOT NULL UNIQUE)";
+            stmt.execute(sqlTopics);
+
+            // 2. Створюємо таблицю СЛІВ (words)
+            // word - саме слово
+            // hint - підказка
+            // topic_id - це зв'язок! Це id з таблиці topics
+            // FOREIGN KEY... - це правило, яке каже, що topic_id має існувати в таблиці topics
+            String sqlWords = "CREATE TABLE IF NOT EXISTS words (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                    "word VARCHAR(255) NOT NULL, " +
+                    "hint VARCHAR(255), " +
+                    "topic_id INT, " +
+                    "FOREIGN KEY (topic_id) REFERENCES topics(id) ON DELETE CASCADE)";
+            stmt.execute(sqlWords);
+
+            System.out.println("База даних оновлена: таблиці topics та words готові.");
+
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
     }
 
-    // === Збереження ===
-    public void saveName(String name) {
+    // === Збереження теми та слів ===
+    public void saveTopic(String name, ObservableList<ThemeCreatorView.WordEntry> entries) throws SQLException {
         if (name == null || name.trim().isEmpty()) {
-            System.out.println("Помилка: Введи ім'я!");
-            return;
+            throw new SQLException("Помилка: Введіть назву теми!");
         }
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
-             PreparedStatement pstmt = conn.prepareStatement("INSERT INTO users (name) VALUES (?)")) {
-            pstmt.setString(1, name.trim());
-            pstmt.executeUpdate();
-            System.out.println("Збережено: " + name);
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-    }
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS)) {
+            // Вставляємо тему та отримуємо її ID
+            PreparedStatement pstmtTopic = conn.prepareStatement(
+                    "INSERT INTO topics (name) VALUES (?)",
+                    Statement.RETURN_GENERATED_KEYS
+            );
+            pstmtTopic.setString(1, name.trim());
+            pstmtTopic.executeUpdate();
 
-    // === Завантаження даних ===
-    // Цей метод тепер повертає список, а не змінює UI напряму
-    public ObservableList<String> loadNames() {
-        ObservableList<String> items = FXCollections.observableArrayList();
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT id, name FROM users ORDER BY id")) {
-
-            while (rs.next()) {
-                items.add(rs.getInt("id") + ": " + rs.getString("name"));
+            ResultSet generatedKeys = pstmtTopic.getGeneratedKeys();
+            int topicId = -1;
+            if (generatedKeys.next()) {
+                topicId = generatedKeys.getInt(1);
             }
+            if (topicId == -1) {
+                throw new SQLException("Помилка: Не вдалося створити тему!");
+            }
+
+            // Вставляємо слова
+            PreparedStatement pstmtWords = conn.prepareStatement(
+                    "INSERT INTO words (word, hint, topic_id) VALUES (?, ?, ?)"
+            );
+            for (ThemeCreatorView.WordEntry entry : entries) {
+                pstmtWords.setString(1, entry.word);
+                pstmtWords.setString(2, entry.hint.isEmpty() ? null : entry.hint);
+                pstmtWords.setInt(3, topicId);
+                pstmtWords.addBatch();
+            }
+            pstmtWords.executeBatch();
         } catch (SQLException ex) {
-            ex.printStackTrace();
-            items.add("Помилка завантаження");
+            // Обробка унікальності назви теми
+            if (ex.getErrorCode() == -104) { // H2 помилка для порушення унікальності
+                throw new SQLException("Помилка: Тема з такою назвою вже існує!");
+            }
+            throw ex;
         }
-        return items;
     }
 }
