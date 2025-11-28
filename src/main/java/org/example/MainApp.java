@@ -44,7 +44,7 @@ public class MainApp extends Application {
     private static void loadScene(String fxml) throws IOException {
         FXMLLoader loader = new FXMLLoader(MainApp.class.getResource(fxml));
         Parent root = loader.load();
-        primaryStage.setScene(new Scene(root, 600, 300));
+        primaryStage.setScene(new Scene(root, 1200, 600));
     }
 
 

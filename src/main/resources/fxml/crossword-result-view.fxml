@@ -5,13 +5,13 @@
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.ScrollPane?>
 
 <GridPane alignment="CENTER_LEFT" hgap="20" vgap="10"
-          xmlns="http://javafx.com/javafx/25"
+          xmlns="http://javafx.com/javafx/17.0.2"
           xmlns:fx="http://javafx.com/fxml/1"
           fx:controller="org.example.CrosswordResultView">
 
@@ -27,13 +27,25 @@
     <children>
         <VBox spacing="10" GridPane.columnIndex="0">
             <children>
-                <GridPane fx:id="crosswordGridPane"
-                          style="-fx-border-color: #aaa; -fx-background-color: white; -fx-grid-lines-visible: false;"
-                          alignment="CENTER"
-                          hgap="2" vgap="2"
-                          VBox.vgrow="ALWAYS">
-                </GridPane>
-                <TextArea fx:id="hintsArea" editable="false" prefHeight="150.0" promptText="Тут будуть підказки..." wrapText="true" maxWidth="Infinity"/>
+                <ScrollPane fx:id="crosswordScrollPane"
+                            fitToWidth="false"
+                            fitToHeight="false"
+                            pannable="true"
+                            style="-fx-background: white; -fx-border-color: #aaa; -fx-border-width: 2;"
+                            VBox.vgrow="ALWAYS">
+
+                    <GridPane fx:id="crosswordGridPane"
+                              alignment="CENTER"
+                              hgap="2" vgap="2"
+                              style="-fx-background-color: white;" />
+                </ScrollPane>
+
+                <TextArea fx:id="hintsArea"
+                          editable="false"
+                          prefHeight="150.0"
+                          promptText="Тут будуть підказки..."
+                          wrapText="true"
+                          maxWidth="Infinity"/>
             </children>
         </VBox>
 
