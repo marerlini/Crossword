@@ -55,7 +55,7 @@
 
                 <Region VBox.vgrow="ALWAYS" />
 
-                <Button maxWidth="Infinity" text="Показати відповіді" />
+                <Button fx:id="showAnswerButton" maxWidth="Infinity" text="Показати відповіді" onAction="#toggleAnswers"/>
 
                 <Region VBox.vgrow="ALWAYS" />
 
