@@ -25,27 +25,35 @@
     </rowConstraints>
 
     <children>
-        <VBox spacing="10" GridPane.columnIndex="0">
+        <VBox spacing="15" GridPane.columnIndex="0">
             <children>
+
+                <!-- Сітка кросворду — тепер займає 60% висоти -->
                 <ScrollPane fx:id="crosswordScrollPane"
                             fitToWidth="false"
                             fitToHeight="false"
                             pannable="true"
-                            style="-fx-background: white; -fx-border-color: #aaa; -fx-border-width: 2;"
-                            VBox.vgrow="ALWAYS">
-
+                            VBox.vgrow="ALWAYS"
+                            prefHeight="600"
+                            maxHeight="800"
+                            minHeight="400"
+                            style="-fx-background: white; -fx-border-color: #aaa; -fx-border-width: 2;">
                     <GridPane fx:id="crosswordGridPane"
                               alignment="CENTER"
                               hgap="2" vgap="2"
                               style="-fx-background-color: white;" />
                 </ScrollPane>
 
+                <!-- Легенда (підказки) — тепер має багато місця -->
                 <TextArea fx:id="hintsArea"
                           editable="false"
-                          prefHeight="150.0"
-                          promptText="Тут будуть підказки..."
                           wrapText="true"
-                          maxWidth="Infinity"/>
+                          prefHeight="300"
+                          minHeight="200"
+                          maxHeight="500"
+                          promptText="Тут будуть підказки..."
+                          style="-fx-font-size: 14px;"
+                          VBox.vgrow="ALWAYS" />
             </children>
         </VBox>
 
@@ -59,7 +67,10 @@
 
                 <Region VBox.vgrow="ALWAYS" />
 
-                <Button maxWidth="Infinity" text="Перегенерувати" />
+                <Button fx:id="regenerateButton"
+                        maxWidth="Infinity"
+                        text="Перегенерувати"
+                        onAction="#regenerateCrossword" />
 
                 <Region VBox.vgrow="ALWAYS" />
 

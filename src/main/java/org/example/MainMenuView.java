@@ -194,11 +194,8 @@ public class MainMenuView implements Initializable {
             count = currentWords.size();
         }
 
-        // Тут буде реальний генератор, а поки тестовий
-        Crossword crossword = CrosswordGenerator.generateTestCrossword(
-                new ArrayList<>(currentWords), count);
-
-        MainApp.showCrosswordResult(crossword);
+        // Просто передаємо дані — генерація буде на іншій сцені!
+        MainApp.showCrosswordResult(new ArrayList<>(currentWords), count);
     }
 
     private void showError(String msg) {

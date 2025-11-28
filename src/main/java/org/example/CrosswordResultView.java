@@ -11,12 +11,14 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Button;
 import javafx.geometry.Insets;
-import java.util.HashMap;
+
+import java.util.*;
+
 import org.example.model.Crossword;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 public class CrosswordResultView implements Initializable {
 
@@ -31,17 +33,40 @@ public class CrosswordResultView implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        crossword = MainApp.getCurrentCrossword();
-        if (crossword == null) {
-            hintsArea.setText("Кросворд не згенеровано!");
+        generateAndShowCrossword();  // генеруємо при відкритті
+        setupZoomAndPanning();
+    }
+
+    private void generateAndShowCrossword() {
+        List<MainMenuView.WordEntry> allWords = MainApp.getWordsForGeneration();
+        int count = MainApp.getWordsToUseCount();
+
+        if (allWords == null || allWords.isEmpty()) {
+            hintsArea.setText("Немає слів для генерації!");
             return;
         }
 
+        List<MainMenuView.WordEntry> selected = new ArrayList<>(allWords);
+        Collections.shuffle(selected);
+        selected = selected.stream().limit(count).collect(Collectors.toList());
+
+        crossword = CrosswordGenerator.generate(selected, count);
+
         renderGrid();
+        renderHints();
+
+        crosswordGridPane.setScaleX(1.0);
+        crosswordGridPane.setScaleY(1.0);
+        crosswordScrollPane.setHvalue(0.5);
+        crosswordScrollPane.setVvalue(0.5);
+
         answersVisible = false;
         showAnswerButton.setText("Показати відповіді");
-        renderHints();
-        setupZoomAndPanning();
+    }
+
+    @FXML
+    private void regenerateCrossword() {
+        generateAndShowCrossword();
     }
 
     private void renderGrid() {
@@ -117,7 +142,7 @@ public class CrosswordResultView implements Initializable {
     private void toggleAnswers() {
         answersVisible = !answersVisible;
         showAnswerButton.setText(answersVisible ? "Приховати відповіді" : "Показати відповіді");
-        renderGrid();  // перемальовуємо сітку з новим станом
+        renderGrid();
     }
 
     private void setupZoomAndPanning() {
@@ -160,6 +185,7 @@ public class CrosswordResultView implements Initializable {
         }
         hintsArea.setText(sb.toString());
     }
+
 
     @FXML
     private void onBack() throws IOException {

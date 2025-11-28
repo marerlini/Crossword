@@ -7,6 +7,8 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.example.model.Crossword;
 
@@ -31,10 +33,24 @@ public class MainApp extends Application {
         loadScene("/fxml/theme-creator-view.fxml");
     }
 
-    public static void showCrosswordResult(Crossword crossword) throws IOException {
-        currentCrossword = crossword;
+    // Прибираємо setCurrentCrossword() — більше не потрібен!
+// Залишаємо тільки дані для генерації
 
+    private static List<MainMenuView.WordEntry> allWordsForGeneration;
+    private static int wordsToUseCount;
+
+    public static void showCrosswordResult(List<MainMenuView.WordEntry> words, int count) throws IOException {
+        allWordsForGeneration = new ArrayList<>(words);
+        wordsToUseCount = count;
         loadScene("/fxml/crossword-result-view.fxml");
+    }
+
+    public static List<MainMenuView.WordEntry> getWordsForGeneration() {
+        return allWordsForGeneration;
+    }
+
+    public static int getWordsToUseCount() {
+        return wordsToUseCount;
     }
 
     public static Crossword getCurrentCrossword() {
