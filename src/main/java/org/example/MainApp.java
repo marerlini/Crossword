@@ -8,9 +8,12 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
+import org.example.model.Crossword;
+
 public class MainApp extends Application {
 
     private static Stage primaryStage;
+    private static Crossword currentCrossword;
 
     @Override
     public void start(Stage stage) throws IOException {
@@ -28,8 +31,14 @@ public class MainApp extends Application {
         loadScene("/fxml/theme-creator-view.fxml");
     }
 
-    public static void showCrosswordResult() throws IOException {
+    public static void showCrosswordResult(Crossword crossword) throws IOException {
+        currentCrossword = crossword;
+
         loadScene("/fxml/crossword-result-view.fxml");
+    }
+
+    public static Crossword getCurrentCrossword() {
+        return currentCrossword;
     }
 
     private static void loadScene(String fxml) throws IOException {
@@ -37,6 +46,7 @@ public class MainApp extends Application {
         Parent root = loader.load();
         primaryStage.setScene(new Scene(root, 600, 300));
     }
+
 
     public static void main(String[] args) {
         launch();

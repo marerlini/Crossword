@@ -10,9 +10,11 @@ import javafx.scene.input.KeyCode;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.ResourceBundle;
 
 import org.example.service.DatabaseService;
+import org.example.model.Crossword;
 
 public class MainMenuView implements Initializable {
 
@@ -156,7 +158,7 @@ public class MainMenuView implements Initializable {
         hintField.setText(entry.hint);
         wordField.requestFocus();
         wordField.selectAll();
-        addButton.setText("Оновити (Enter)");
+        addButton.setText("Оновити");
     }
 
     private void clearEditingState() {
@@ -182,26 +184,21 @@ public class MainMenuView implements Initializable {
             return;
         }
 
-        // Отримуємо кількість з поля (користувач міг редагувати)
         String countText = wordCountField.getText().trim();
         int count;
         try {
             count = Integer.parseInt(countText);
+            if (count <= 0) count = currentWords.size();
+            if (count > currentWords.size()) count = currentWords.size();
         } catch (NumberFormatException e) {
-            count = currentWords.size(); // Фолбек на реальну кількість, якщо не число
+            count = currentWords.size();
         }
 
-        // Заглушка: передаємо список і кількість далі
-        System.out.println("Генеруємо кросворд з " + count + " слів:");
-        currentWords.forEach(w -> System.out.println("  " + w.word + (w.hint.isEmpty() ? "" : " — " + w.hint)));
+        // Тут буде реальний генератор, а поки тестовий
+        Crossword crossword = CrosswordGenerator.generateTestCrossword(
+                new ArrayList<>(currentWords), count);
 
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Генерація");
-        alert.setHeaderText(null);
-        alert.setContentText("Кросворд згенеровано!\nСлів: " + count + "\n(Тимчасова заглушка)");
-        alert.showAndWait();
-
-        // Тут потім буде: MainApp.showCrosswordResult(currentWords);
+        MainApp.showCrosswordResult(crossword);
     }
 
     private void showError(String msg) {

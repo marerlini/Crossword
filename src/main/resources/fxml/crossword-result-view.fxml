@@ -27,8 +27,12 @@
     <children>
         <VBox spacing="10" GridPane.columnIndex="0">
             <children>
-                <Pane fx:id="crosswordGridPane" style="-fx-border-color: #aaa; -fx-background-color: white;" VBox.vgrow="ALWAYS" />
-
+                <GridPane fx:id="crosswordGridPane"
+                          style="-fx-border-color: #aaa; -fx-background-color: white; -fx-grid-lines-visible: false;"
+                          alignment="CENTER"
+                          hgap="2" vgap="2"
+                          VBox.vgrow="ALWAYS">
+                </GridPane>
                 <TextArea fx:id="hintsArea" editable="false" prefHeight="150.0" promptText="Тут будуть підказки..." wrapText="true" maxWidth="Infinity"/>
             </children>
         </VBox>
