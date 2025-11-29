@@ -74,8 +74,11 @@
 
                 <Region VBox.vgrow="ALWAYS" />
 
-                <Button maxWidth="Infinity" style="-fx-background-color: #4CAF50; -fx-text-fill: white;" text="Зберегти" />
-            </children>
+                <Button fx:id="savePdfButton"
+                        maxWidth="Infinity"
+                        text="Зберегти як PDF"
+                        onAction="#saveAsPdf"
+                        style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;" />            </children>
         </VBox>
     </children>
 

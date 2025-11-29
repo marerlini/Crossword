@@ -3,16 +3,34 @@ package org.example;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Button;
 import javafx.geometry.Insets;
-
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import java.io.File;
+import javafx.stage.FileChooser;
+import org.apache.pdfbox.pdmodel.*;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.image.WritableImage;
+import javafx.stage.FileChooser;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import javafx.scene.SnapshotParameters;
 import java.util.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import org.example.model.Crossword;
 
@@ -26,6 +44,7 @@ public class CrosswordResultView implements Initializable {
     @FXML private GridPane crosswordGridPane;
     @FXML private TextArea hintsArea;
     @FXML private Button showAnswerButton;
+    @FXML private Button savePdfButton;
     private boolean answersVisible = false;
 
     private Crossword crossword;
@@ -190,5 +209,146 @@ public class CrosswordResultView implements Initializable {
     @FXML
     private void onBack() throws IOException {
         MainApp.showMainMenu();
+    }
+
+    @FXML
+    private void saveAsPdf() {
+        WritableImage snapshot = crosswordGridPane.snapshot(new SnapshotParameters(), null);
+
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Зберегти кросворд як PDF");
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF (*.pdf)", "*.pdf"));
+        fc.setInitialFileName("Кросворд_" + LocalDate.now() + ".pdf");
+        File file = fc.showSaveDialog(crosswordGridPane.getScene().getWindow());
+        if (file == null) return;
+
+        try (PDDocument doc = new PDDocument()) {
+            PDPage page = new PDPage(PDRectangle.A4);
+            doc.addPage(page);
+            float width  = page.getMediaBox().getWidth();   // 595
+            float height = page.getMediaBox().getHeight();  // 842
+
+            try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
+
+                // ── 1. Сітка кросворду (максимум 520×520) ──
+                BufferedImage bImg = SwingFXUtils.fromFXImage(snapshot, null);
+                PDImageXObject img = PDImageXObject.createFromByteArray(doc, bufferedImageToBytes(bImg, "png"), "grid");
+
+                float maxGridSize = 520f;
+                float scale = Math.min(maxGridSize / img.getWidth(), maxGridSize / img.getHeight());
+                float imgW = img.getWidth()  * scale;
+                float imgH = img.getHeight() * scale;
+
+                float gridX = (width - imgW) / 2;
+                float gridY = height - 100 - imgH;
+
+                cs.drawImage(img, gridX, gridY, imgW, imgH);
+
+                // ── 2. Шрифти з українською підтримкою ──
+                PDType0Font boldFont    = loadTtfFont(doc, "/fonts/Roboto-Bold.ttf");
+                PDType0Font regularFont = loadTtfFont(doc, "/fonts/Roboto-Regular.ttf");
+
+                // ── 3. Заголовок ──
+                cs.beginText();
+                cs.setFont(boldFont, 28);
+                cs.newLineAtOffset(width / 2 - 110, height - 60);
+                cs.showText("КРОСВОРД № " + (int)(Math.random()*999 + 1));
+                cs.endText();
+
+                cs.beginText();
+                cs.setFont(regularFont, 12);
+                cs.newLineAtOffset(width / 2 - 80, height - 90);
+                cs.showText("Дата: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
+                cs.endText();
+
+                // ── 4. Підказки у дві колонки (гарантовано влізуть!) ──
+                String[] lines = hintsArea.getText().split("\n");
+                List<String> across = new ArrayList<>();
+                List<String> down   = new ArrayList<>();
+
+                boolean isAcross = true;
+                for (String line : lines) {
+                    if (line.trim().startsWith("ПО ГОРИЗОНТАЛІ")) isAcross = true;
+                    else if (line.trim().startsWith("ПО ВЕРТИКАЛІ")) isAcross = false;
+                    else if (!line.trim().isEmpty()) {
+                        if (isAcross) across.add(line.trim());
+                        else          down.add(line.trim());
+                    }
+                }
+
+                float col1X = 40;
+                float col2X = width / 2 + 20;
+                float startY = gridY - 40;
+                float leading = 14f;
+
+                cs.setFont(boldFont, 14);
+                cs.beginText();
+                cs.newLineAtOffset(col1X, startY);
+                cs.showText("ПО ГОРИЗОНТАЛІ");
+                cs.endText();
+
+                cs.beginText();
+                cs.newLineAtOffset(col2X, startY);
+                cs.showText("ПО ВЕРТИКАЛІ");
+                cs.endText();
+
+                cs.setFont(regularFont, 11);
+                cs.setLeading(leading);
+
+                // ліва колонка
+                cs.beginText();
+                cs.newLineAtOffset(col1X, startY - 25);
+                for (String s : across) {
+                    if (s.length() > 70) s = s.substring(0,67) + "…";
+                    cs.showText(s);
+                    cs.newLine();
+                }
+                cs.endText();
+
+                // права колонка
+                cs.beginText();
+                cs.newLineAtOffset(col2X, startY - 25);
+                for (String s : down) {
+                    if (s.length() > 70) s = s.substring(0,67) + "…";
+                    cs.showText(s);
+                    cs.newLine();
+                }
+                cs.endText();
+            }
+
+            doc.save(file);
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            showError("Не вдалося зберегти PDF:\n" + ex.getMessage());
+        }
+    }
+    // Допоміжний метод: Image → byte[]
+    private byte[] bufferedImageToBytes(BufferedImage image, String format) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(image, format, baos);
+        return baos.toByteArray();
+    }
+
+    // Додаємо цей метод у твій клас (один раз)
+    private PDType0Font loadTtfFont(PDDocument doc, String fontPath) {
+        try (InputStream fontStream = getClass().getResourceAsStream(fontPath)) {
+            if (fontStream != null) {
+                return PDType0Font.load(doc, fontStream, true);  // true = embedSubset (оптимізація)
+            }
+        } catch (Exception e) {
+            System.err.println("Не вдалося завантажити шрифт " + fontPath + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+        // Фолбек на стандартний шрифт (без кирилиці)
+        return null;
+    }
+
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Помилка");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }
