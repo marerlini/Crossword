@@ -15,8 +15,8 @@ import org.example.model.Crossword;
 public class MainApp extends Application {
 
     private static Stage primaryStage;
-    private static Crossword currentCrossword;
-
+    private static List<MainMenuView.WordEntry> allWordsForGeneration;
+    private static int wordsToUseCount;
     @Override
     public void start(Stage stage) throws IOException {
         primaryStage = stage;
@@ -33,12 +33,6 @@ public class MainApp extends Application {
         loadScene("/fxml/theme-creator-view.fxml");
     }
 
-    // Прибираємо setCurrentCrossword() — більше не потрібен!
-// Залишаємо тільки дані для генерації
-
-    private static List<MainMenuView.WordEntry> allWordsForGeneration;
-    private static int wordsToUseCount;
-
     public static void showCrosswordResult(List<MainMenuView.WordEntry> words, int count) throws IOException {
         allWordsForGeneration = new ArrayList<>(words);
         wordsToUseCount = count;
@@ -51,10 +45,6 @@ public class MainApp extends Application {
 
     public static int getWordsToUseCount() {
         return wordsToUseCount;
-    }
-
-    public static Crossword getCurrentCrossword() {
-        return currentCrossword;
     }
 
     private static void loadScene(String fxml) throws IOException {
