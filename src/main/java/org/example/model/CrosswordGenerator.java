@@ -7,11 +7,11 @@ public class CrosswordGenerator {
 
     private int GRID_SIZE;
     private static final int MIN_GRID_SIZE = 10;
-    private static final int MAX_GRID_SIZE = 50; // максимум, щоб не зависнути
+    private static final int MAX_GRID_SIZE = 100;
 
     private char[][] grid;
     private final List<MainMenuView.WordEntry> allWords;// весь словник
-    private final int targetWordCount;                  // скільки треба в кросворді (maxWords)
+    private final int targetWordCount;
     private final List<Placement> placements = new ArrayList<>();
     private record Position(int row, int col, boolean horizontal, int intersections) {}
     private record Placement(String word, String hint, int row, int col, boolean horizontal, int number) {}
@@ -298,8 +298,14 @@ public class CrosswordGenerator {
     private void expandGridIfNeeded(int requiredSize) {
         if (requiredSize <= GRID_SIZE) return;
 
-        int newSize = Math.min(MAX_GRID_SIZE, Math.max(GRID_SIZE + 10, requiredSize + 10));
+        int desired = requiredSize + 15; // запас побільше
+        int newSize = Math.min(MAX_GRID_SIZE, Math.max(GRID_SIZE + 20, desired));
 
+        if (newSize >= MAX_GRID_SIZE) {
+            // Якщо дійсно не влізає — кидаємо зрозумілу помилку
+            throw new IllegalStateException("Максимальний розмір сітки: " + MAX_GRID_SIZE + "×" + MAX_GRID_SIZE +
+                    ". При генерації кросворд перевищив ці значення, спробуйте ввести меншу кількість слів та/або використати коротші слова");
+        }
         char[][] newGrid = new char[newSize][newSize];
         for (char[] row : newGrid) Arrays.fill(row, '.');
 

@@ -39,6 +39,27 @@ public class ThemeCreatorView implements Initializable {
             }
         });
 
+        // Обмеження та автодоповнення для поля слова
+        wordField.textProperty().addListener((obs, oldText, newText) -> {
+            if (newText != null) {
+                // Обмеження 50 символів
+                if (newText.length() > 50) {
+                    wordField.setText(oldText);
+                    showError("Максимум 50 символів для слова!");
+                    return;
+                }
+                // Авто-верхній регістр
+                String upper = newText.toUpperCase();
+                if (!newText.equals(upper)) {
+                    wordField.setText(upper);
+                    wordField.positionCaret(upper.length());
+                }
+            }
+        });
+
+        wordField.setPromptText("Слово (макс. 50 символів)");
+        hintField.setPromptText("Підказка (обов’язково!)");
+
         // Подвійний клік — редагування
         wordList.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
@@ -58,7 +79,7 @@ public class ThemeCreatorView implements Initializable {
             }
         });
 
-        // Enter у полях
+        // Enter у полях = додати/оновити
         wordField.setOnKeyPressed(e -> { if (e.getCode() == KeyCode.ENTER) applyCurrentAction(); });
         hintField.setOnKeyPressed(e -> { if (e.getCode() == KeyCode.ENTER) applyCurrentAction(); });
     }
@@ -71,13 +92,14 @@ public class ThemeCreatorView implements Initializable {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Імпортувати слова з файлу");
         fileChooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("Текстові файли", "*.txt")
+                new FileChooser.ExtensionFilter("Текстові файли (*.txt)", "*.txt")
         );
         File file = fileChooser.showOpenDialog(wordList.getScene().getWindow());
         if (file == null) return;
 
         int imported = 0;
         int skipped = 0;
+        int invalid = 0;
 
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
@@ -85,25 +107,36 @@ public class ThemeCreatorView implements Initializable {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
-                if (line.isEmpty()) continue;
+                if (line.isEmpty() || line.startsWith("#")) continue; // коментарі
 
                 String word, hint = "";
 
-                // Розділяємо по " — " або " - " або по першому тире
-                int dashIndex = line.indexOf("—");   // ем-деш
-                if (dashIndex == -1) dashIndex = line.indexOf("–"); // ен-деш
-                if (dashIndex == -1) dashIndex = line.indexOf('-');
+                int separatorPos = line.indexOf("—");
+                if (separatorPos == -1) separatorPos = line.indexOf("–");
+                if (separatorPos == -1) separatorPos = line.indexOf("-");
+                if (separatorPos == -1) separatorPos = line.indexOf(":");
 
-                if (dashIndex > 0) {
-                    word = line.substring(0, dashIndex).trim();
-                    hint = line.substring(dashIndex + 1).trim();
+                if (separatorPos > 0) {
+                    word = line.substring(0, separatorPos).trim().toUpperCase();
+                    hint = line.substring(separatorPos + 1).trim();
                 } else {
-                    word = line;
+                    word = line.trim().toUpperCase();
                 }
 
-                if (word.isEmpty()) continue;
+                // Валідація при імпорті
+                if (word.isEmpty() || word.isBlank()) {
+                    invalid++;
+                    continue;
+                }
+                if (word.length() > 50) {
+                    invalid++;
+                    continue;
+                }
+                if (hint.isEmpty()) {
+                    invalid++;
+                    continue;
+                }
 
-                // Перевіряємо на дублікат (за словом)
                 boolean exists = wordEntries.stream().anyMatch(e -> e.word.equalsIgnoreCase(word));
                 if (!exists) {
                     wordEntries.add(new MainMenuView.WordEntry(word, hint));
@@ -113,7 +146,14 @@ public class ThemeCreatorView implements Initializable {
                 }
             }
 
-            showInfo("Імпорт завершено!\nДодано: " + imported + "\nПропущено дублікатів: " + skipped);
+            String message = "Імпорт завершено!\n" +
+                    "Додано нових: " + imported + "\n" +
+                    "Пропущено дублікатів: " + skipped;
+            if (invalid > 0) {
+                message += "\nПропущено некоректних рядків: " + invalid;
+            }
+
+            showInfo(message);
 
         } catch (IOException ex) {
             showError("Не вдалося прочитати файл:\n" + ex.getMessage());
@@ -121,24 +161,56 @@ public class ThemeCreatorView implements Initializable {
     }
 
     private void applyCurrentAction() {
-        String word = wordField.getText().trim();
+        String rawWord = wordField.getText();
         String hint = hintField.getText().trim();
 
-        if (word.isEmpty()) return;
+        if (rawWord == null || rawWord.trim().isEmpty()) {
+            showError("Введіть слово!");
+            return;
+        }
+
+        String word = rawWord.trim().toUpperCase();
+
+        // Перевірки
+        if (word.length() > 50) {
+            showError("Слово занадто довге! Максимум 50 символів.");
+            return;
+        }
+
+        if (word.isBlank()) {
+            showError("Слово не може складатися лише з пробілів!");
+            return;
+        }
+
+        if (hint.isEmpty()) {
+            showError("Введіть підказку до слова!");
+            return;
+        }
 
         if (currentlyEditing != null) {
+            // === РЕДАГУВАННЯ ===
+            // Дозволяємо змінити навіть на таке саме слово (бо це те саме)
             currentlyEditing.word = word;
             currentlyEditing.hint = hint;
             wordList.refresh();
             clearEditingState();
         } else {
-            // Додаємо тільки якщо такого слова ще немає
-            if (wordEntries.stream().noneMatch(e -> e.word.equalsIgnoreCase(word))) {
-                wordEntries.add(new MainMenuView.WordEntry(word, hint));
+            // === ДОДАВАННЯ НОВОГО ===
+            boolean exists = wordEntries.stream()
+                    .anyMatch(e -> e.word.equalsIgnoreCase(word));
+
+            if (exists) {
+                showError("Слово \"" + word + "\" вже є у списку теми!");
+                return;
             }
-            wordField.clear();
-            hintField.clear();
+
+            wordEntries.add(new MainMenuView.WordEntry(word, hint));
         }
+
+        // Очищення полів
+        wordField.clear();
+        hintField.clear();
+        wordField.requestFocus();
     }
 
     private void startEditing(MainMenuView.WordEntry entry) {

@@ -53,28 +53,61 @@ public class CrosswordResultView implements Initializable {
         int count = MainApp.getWordsToUseCount();
 
         if (allWords == null || allWords.isEmpty()) {
-            hintsArea.setText("Немає слів для генерації!");
+            showError("Немає слів для генерації кросворду!");
             return;
         }
 
+        // Перемішуємо та обрізаємо список до потрібної кількості
         List<MainMenuView.WordEntry> selected = new ArrayList<>(allWords);
         Collections.shuffle(selected);
         selected = selected.stream().limit(count).collect(Collectors.toList());
 
-        crossword = CrosswordGenerator.generate(selected, count);
+        try {
+            crossword = CrosswordGenerator.generate(selected, count);
 
-        renderGrid();
-        renderHints();
+            // Якщо згенерувалося менше слів, ніж просили — попереджаємо
+            int actualWords = crossword.getAcrossClues().size() + crossword.getDownClues().size();
+            if (actualWords < count) {
+                String warning = String.format(
+                        "Увага!\n" +
+                                "Запрошено %d слів, але вдалося розмістити лише %d.\n\n" +
+                                "Можливі причини:\n" +
+                                "• Дуже довгі або «незручні» слова в списку\n" +
+                                "• Недостатньо перетинів між словами\n\n" +
+                                "Спробуйте перегенерувати або видалити найдовші слова.",
+                        count, actualWords
+                );
+                showWarning(warning);
+            }
 
-        crosswordGridPane.setScaleX(1.0);
-        crosswordGridPane.setScaleY(1.0);
-        crosswordScrollPane.setHvalue(0.5);
-        crosswordScrollPane.setVvalue(0.5);
+            renderGrid();
+            renderHints();
 
-        answersVisible = false;
-        showAnswerButton.setText("Показати відповіді");
+            // Центруємо сітку
+            crosswordGridPane.setScaleX(1.0);
+            crosswordGridPane.setScaleY(1.0);
+            crosswordScrollPane.setHvalue(0.5);
+            crosswordScrollPane.setVvalue(0.5);
+
+            answersVisible = false;
+            showAnswerButton.setText("Показати відповіді");
+
+        } catch (IllegalStateException e) {
+            // Це саме та помилка, яку кидає генератор, якщо сітка не влізає
+            showError(
+                    "Не вдалося згенерувати кросворд!\n\n" +
+                            e.getMessage() + "\n\n" +
+                            "Рекомендації:\n" +
+                            "• Зменшіть кількість слів для генерації\n" +
+                            "• Видаліть найдовші слова зі списку\n" +
+                            "• Спробуйте перегенерувати ще раз"
+            );
+        } catch (Exception e) {
+            // Будь-які інші неочікувані помилки
+            e.printStackTrace();
+            showError("Невідома помилка під час генерації:\n" + e.getMessage());
+        }
     }
-
     @FXML
     private void regenerateCrossword() {
         generateAndShowCrossword();
@@ -339,6 +372,15 @@ public class CrosswordResultView implements Initializable {
         alert.setTitle("Помилка");
         alert.setHeaderText(null);
         alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void showWarning(String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Не всі слова помістилися");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.getDialogPane().setPrefWidth(480);
         alert.showAndWait();
     }
 }

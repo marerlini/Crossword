@@ -128,26 +128,59 @@ public class MainMenuView implements Initializable {
     }
 
     private void applyWordAction() {
-        String word = wordField.getText().trim();
+        String rawWord = wordField.getText();
         String hint = hintField.getText().trim();
-        if (word.isEmpty()) return;
+
+        // Перевірка на порожнє слово
+        if (rawWord == null || rawWord.trim().isEmpty()) {
+            showError("Введіть слово!");
+            return;
+        }
+
+        String word = rawWord.trim().toUpperCase();
+
+        // Перевірка довжини слова — максимум 50 символів
+        if (word.length() > 50) {
+            showError("Слово занадто довге! Максимум 50 символів.");
+            return;
+        }
+
+        // Перевірка на порожню підказку
+        if (hint.isEmpty()) {
+            showError("Введіть підказку до слова!");
+            return;
+        }
+
+        // Заборона додавання лише з пробілів або спецсимволів
+        if (word.isBlank()) {
+            showError("Слово не може складатися лише з пробілів!");
+            return;
+        }
 
         if (currentlyEditing != null) {
-            // Редагуємо
+            // РЕДАГУВАННЯ
             currentlyEditing.word = word;
             currentlyEditing.hint = hint;
             wordList.refresh();
             clearEditingState();
-            // Не оновлюємо лічильник при редагуванні (кількість не змінюється)
         } else {
-            // Додаємо нове (уникаємо дублікатів за словом)
-            if (currentWords.stream().noneMatch(w -> w.word.equalsIgnoreCase(word))) {
-                currentWords.add(new WordEntry(word, hint));
-                updateWordCount(); // Оновлюємо тільки при додаванні нового слова
+            // Перевіряємо дублікати (нечутливо до регістру)
+            boolean exists = currentWords.stream()
+                    .anyMatch(w -> w.word.equalsIgnoreCase(word));
+
+            if (exists) {
+                showError("Слово \"" + word + "\" вже є у списку!");
+                return;
             }
+
+            currentWords.add(new WordEntry(word, hint));
+            updateWordCount();
         }
+
+        // Очищаємо поля після успішного додавання/редагування
         wordField.clear();
         hintField.clear();
+        wordField.requestFocus();
     }
 
     private void startEditing(WordEntry entry) {
@@ -183,17 +216,35 @@ public class MainMenuView implements Initializable {
         }
 
         String countText = wordCountField.getText().trim();
-        int count;
+        int desiredCount;
+
         try {
-            count = Integer.parseInt(countText);
-            if (count <= 0) count = currentWords.size();
-            if (count > currentWords.size()) count = currentWords.size();
+            desiredCount = Integer.parseInt(countText);
         } catch (NumberFormatException e) {
-            count = currentWords.size();
+            showError("Введіть коректне число слів для генерації!");
+            return;
         }
 
-        // передаємо дані
-        MainApp.showCrosswordResult(new ArrayList<>(currentWords), count);
+        if (desiredCount <= 0) {
+            showError("Кількість слів має бути більше 0!");
+            return;
+        }
+
+        int availableWords = currentWords.size();
+
+        if (desiredCount > availableWords) {
+            showError(
+                    String.format(
+                            "Неможливо згенерувати %d слів — у списку лише %d %s!",
+                            desiredCount,
+                            availableWords,
+                            availableWords == 1 ? "слово" : availableWords < 5 ? "слова" : "слів"
+                    )
+            );
+            return;
+        }
+
+        MainApp.showCrosswordResult(new ArrayList<>(currentWords), desiredCount);
     }
 
     private void showError(String msg) {
