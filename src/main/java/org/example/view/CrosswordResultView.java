@@ -1,42 +1,35 @@
-package org.example;
+package org.example.view;
 
+import java.io.*;
+import java.net.URL;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
+
+import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.control.*;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.geometry.Insets;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.font.PDType0Font;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
-import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
-import java.io.File;
 import javafx.stage.FileChooser;
+
 import org.apache.pdfbox.pdmodel.*;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
-import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.image.WritableImage;
-import javafx.stage.FileChooser;
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.*;
-import javafx.scene.SnapshotParameters;
-import java.util.*;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
+import org.example.MainApp;
 import org.example.model.Crossword;
-
-import java.io.IOException;
-import java.net.URL;
-import java.util.stream.Collectors;
+import org.example.model.CrosswordGenerator;
 
 public class CrosswordResultView implements Initializable {
 
@@ -44,7 +37,6 @@ public class CrosswordResultView implements Initializable {
     @FXML private GridPane crosswordGridPane;
     @FXML private TextArea hintsArea;
     @FXML private Button showAnswerButton;
-    @FXML private Button savePdfButton;
     private boolean answersVisible = false;
 
     private Crossword crossword;
@@ -133,12 +125,12 @@ public class CrosswordResultView implements Initializable {
                     white.setStroke(Color.BLACK);
                     white.setStrokeWidth(2);
 
-                    // Літера — тепер її можна ховати/показувати
+                    // Літера
                     Label letter = new Label(String.valueOf(Character.toUpperCase(ch)));
                     letter.setStyle("-fx-font-weight: bold; -fx-font-size: 18;");
-                    letter.setVisible(answersVisible);  // ключовий рядок!
+                    letter.setVisible(answersVisible);
 
-                    // Номер (якщо є)
+                    // Номер
                     Integer clueNumber = numberMap.get(new Cell(row, col));
                     if (clueNumber != null) {
                         Label numberLabel = new Label(String.valueOf(clueNumber));
@@ -165,7 +157,7 @@ public class CrosswordResultView implements Initializable {
     }
 
     private void setupZoomAndPanning() {
-        // Коліщатко — масштабування
+        // Коліщатко + CTRL масштабування
         crosswordScrollPane.setOnScroll(event -> {
             if (event.isControlDown()) {
                 double delta = event.getDeltaY();
@@ -182,7 +174,7 @@ public class CrosswordResultView implements Initializable {
             }
         });
 
-        // Права кнопка або просто перетягування — рухати (pannable=true вже є)
+        // Права кнопка або просто перетягування — рухати
         crosswordScrollPane.setPannable(true);
     }
 
@@ -194,7 +186,7 @@ public class CrosswordResultView implements Initializable {
                     .append(" (").append(clue.answer).append(")\n");
         }
         if (crossword.getDownClues().isEmpty()) {
-            sb.append("\nПО ВЕРТИКАЛІ:\n(поки немає)\n");
+            sb.append("\nПО ВЕРТИКАЛІ:\n(немає)\n");
         } else {
             sb.append("\nПО ВЕРТИКАЛІ:\n");
             for (var clue : crossword.getDownClues()) {
@@ -225,14 +217,14 @@ public class CrosswordResultView implements Initializable {
         try (PDDocument doc = new PDDocument()) {
             PDPage page = new PDPage(PDRectangle.A4);
             doc.addPage(page);
-            float width  = page.getMediaBox().getWidth();   // 595
-            float height = page.getMediaBox().getHeight();  // 842
+            float width  = page.getMediaBox().getWidth();
+            float height = page.getMediaBox().getHeight();
 
             try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
 
-                // ── 1. Сітка кросворду (максимум 520×520) ──
+                // Сітка кросворду (максимум 520×520)
                 BufferedImage bImg = SwingFXUtils.fromFXImage(snapshot, null);
-                PDImageXObject img = PDImageXObject.createFromByteArray(doc, bufferedImageToBytes(bImg, "png"), "grid");
+                PDImageXObject img = PDImageXObject.createFromByteArray(doc, bufferedImageToBytes(bImg), "grid");
 
                 float maxGridSize = 520f;
                 float scale = Math.min(maxGridSize / img.getWidth(), maxGridSize / img.getHeight());
@@ -244,15 +236,15 @@ public class CrosswordResultView implements Initializable {
 
                 cs.drawImage(img, gridX, gridY, imgW, imgH);
 
-                // ── 2. Шрифти з українською підтримкою ──
+                // Шрифти з українською підтримкою
                 PDType0Font boldFont    = loadTtfFont(doc, "/fonts/Roboto-Bold.ttf");
                 PDType0Font regularFont = loadTtfFont(doc, "/fonts/Roboto-Regular.ttf");
 
-                // ── 3. Заголовок ──
+                //Заголовок
                 cs.beginText();
                 cs.setFont(boldFont, 28);
                 cs.newLineAtOffset(width / 2 - 110, height - 60);
-                cs.showText("КРОСВОРД № " + (int)(Math.random()*999 + 1));
+                cs.showText("КРОСВОРД");
                 cs.endText();
 
                 cs.beginText();
@@ -261,7 +253,7 @@ public class CrosswordResultView implements Initializable {
                 cs.showText("Дата: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
                 cs.endText();
 
-                // ── 4. Підказки у дві колонки (гарантовано влізуть!) ──
+                // Підказки у дві колонки
                 String[] lines = hintsArea.getText().split("\n");
                 List<String> across = new ArrayList<>();
                 List<String> down   = new ArrayList<>();
@@ -323,24 +315,22 @@ public class CrosswordResultView implements Initializable {
             showError("Не вдалося зберегти PDF:\n" + ex.getMessage());
         }
     }
-    // Допоміжний метод: Image → byte[]
-    private byte[] bufferedImageToBytes(BufferedImage image, String format) throws IOException {
+
+    private byte[] bufferedImageToBytes(BufferedImage image) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(image, format, baos);
+        ImageIO.write(image, "png", baos);
         return baos.toByteArray();
     }
 
-    // Додаємо цей метод у твій клас (один раз)
     private PDType0Font loadTtfFont(PDDocument doc, String fontPath) {
         try (InputStream fontStream = getClass().getResourceAsStream(fontPath)) {
             if (fontStream != null) {
-                return PDType0Font.load(doc, fontStream, true);  // true = embedSubset (оптимізація)
+                return PDType0Font.load(doc, fontStream, true);
             }
         } catch (Exception e) {
             System.err.println("Не вдалося завантажити шрифт " + fontPath + ": " + e.getMessage());
             e.printStackTrace();
         }
-        // Фолбек на стандартний шрифт (без кирилиці)
         return null;
     }
 

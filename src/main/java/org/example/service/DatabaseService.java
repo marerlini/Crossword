@@ -1,8 +1,7 @@
 package org.example.service;
 
 import javafx.collections.ObservableList;
-import org.example.ThemeCreatorView;
-
+import org.example.view.MainMenuView;
 import java.sql.*;
 
 public class DatabaseService {
@@ -12,29 +11,28 @@ public class DatabaseService {
     private static final String USER = "sa";
     private static final String PASS = "";
 
-    // Конструктор: при створенні сервісу одразу перевіряємо таблицю
+    // Конструктор
     public DatabaseService() {
         createTables();
     }
 
-    // === Створення таблиць ===
+    // Створення таблиць
     private void createTables() {
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
              Statement stmt = conn.createStatement()) {
 
-            // 1. Створюємо таблицю ТЕМ (topics)
+            // Створюємо таблицю ТЕМ (topics)
             // id - унікальний номер теми
-            // name - назва теми (наприклад, "Фрукти")
+            // name - назва теми
             String sqlTopics = "CREATE TABLE IF NOT EXISTS topics (" +
                     "id INT AUTO_INCREMENT PRIMARY KEY, " +
                     "name VARCHAR(255) NOT NULL UNIQUE)";
             stmt.execute(sqlTopics);
 
-            // 2. Створюємо таблицю СЛІВ (words)
+            // Створюємо таблицю СЛІВ (words)
             // word - саме слово
             // hint - підказка
-            // topic_id - це зв'язок! Це id з таблиці topics
-            // FOREIGN KEY... - це правило, яке каже, що topic_id має існувати в таблиці topics
+            // topic_id - id з таблиці topics
             String sqlWords = "CREATE TABLE IF NOT EXISTS words (" +
                     "id INT AUTO_INCREMENT PRIMARY KEY, " +
                     "word VARCHAR(255) NOT NULL, " +
@@ -50,8 +48,8 @@ public class DatabaseService {
         }
     }
 
-    // === Збереження теми та слів ===
-    public void saveTopic(String name, ObservableList<ThemeCreatorView.WordEntry> entries) throws SQLException {
+    // Збереження теми та слів
+    public void saveTopic(String name, ObservableList<MainMenuView.WordEntry> entries) throws SQLException {
         if (name == null || name.trim().isEmpty()) {
             throw new SQLException("Помилка: Введіть назву теми!");
         }
@@ -77,7 +75,7 @@ public class DatabaseService {
             PreparedStatement pstmtWords = conn.prepareStatement(
                     "INSERT INTO words (word, hint, topic_id) VALUES (?, ?, ?)"
             );
-            for (ThemeCreatorView.WordEntry entry : entries) {
+            for (MainMenuView.WordEntry entry : entries) {
                 pstmtWords.setString(1, entry.word);
                 pstmtWords.setString(2, entry.hint.isEmpty() ? null : entry.hint);
                 pstmtWords.setInt(3, topicId);

@@ -1,4 +1,4 @@
-package org.example;
+package org.example.view;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -7,12 +7,12 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.stage.FileChooser;
-
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ResourceBundle;
 
+import org.example.MainApp;
 import org.example.service.DatabaseService;
 
 public class ThemeCreatorView implements Initializable {
@@ -21,21 +21,19 @@ public class ThemeCreatorView implements Initializable {
     @FXML private TextField wordField;
     @FXML private TextField hintField;
     @FXML private Button addButton;
-    @FXML private Button importButton;
-    @FXML private ListView<WordEntry> wordList;
+    @FXML private ListView<MainMenuView.WordEntry> wordList;
 
-    private ObservableList<WordEntry> wordEntries = FXCollections.observableArrayList();
+    private final ObservableList<MainMenuView.WordEntry> wordEntries = FXCollections.observableArrayList();
     private final DatabaseService databaseService = new DatabaseService();
-
-    private WordEntry currentlyEditing = null;
+    private MainMenuView.WordEntry currentlyEditing = null;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         wordList.setItems(wordEntries);
 
-        wordList.setCellFactory(lv -> new ListCell<WordEntry>() {
+        wordList.setCellFactory(lv -> new ListCell<>() {
             @Override
-            protected void updateItem(WordEntry item, boolean empty) {
+            protected void updateItem(MainMenuView.WordEntry item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? null : item.word + (item.hint.isEmpty() ? "" : " — " + item.hint));
             }
@@ -44,7 +42,7 @@ public class ThemeCreatorView implements Initializable {
         // Подвійний клік — редагування
         wordList.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
-                WordEntry selected = wordList.getSelectionModel().getSelectedItem();
+                MainMenuView.WordEntry selected = wordList.getSelectionModel().getSelectedItem();
                 if (selected != null) startEditing(selected);
             }
         });
@@ -52,7 +50,7 @@ public class ThemeCreatorView implements Initializable {
         // Delete — видалення
         wordList.setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.DELETE || e.getCode() == KeyCode.BACK_SPACE) {
-                WordEntry selected = wordList.getSelectionModel().getSelectedItem();
+                MainMenuView.WordEntry selected = wordList.getSelectionModel().getSelectedItem();
                 if (selected != null) {
                     wordEntries.remove(selected);
                     clearEditingState();
@@ -67,7 +65,7 @@ public class ThemeCreatorView implements Initializable {
 
     @FXML private void onAddWord() { applyCurrentAction(); }
 
-    // === ІМПОРТ ФАЙЛУ ===
+    // ІМПОРТ ФАЙЛУ
     @FXML
     private void onImport() {
         FileChooser fileChooser = new FileChooser();
@@ -91,7 +89,7 @@ public class ThemeCreatorView implements Initializable {
 
                 String word, hint = "";
 
-                // Розділяємо по " — " або " - " або просто по першому тире
+                // Розділяємо по " — " або " - " або по першому тире
                 int dashIndex = line.indexOf("—");   // ем-деш
                 if (dashIndex == -1) dashIndex = line.indexOf("–"); // ен-деш
                 if (dashIndex == -1) dashIndex = line.indexOf('-');
@@ -108,7 +106,7 @@ public class ThemeCreatorView implements Initializable {
                 // Перевіряємо на дублікат (за словом)
                 boolean exists = wordEntries.stream().anyMatch(e -> e.word.equalsIgnoreCase(word));
                 if (!exists) {
-                    wordEntries.add(new WordEntry(word, hint));
+                    wordEntries.add(new MainMenuView.WordEntry(word, hint));
                     imported++;
                 } else {
                     skipped++;
@@ -136,14 +134,14 @@ public class ThemeCreatorView implements Initializable {
         } else {
             // Додаємо тільки якщо такого слова ще немає
             if (wordEntries.stream().noneMatch(e -> e.word.equalsIgnoreCase(word))) {
-                wordEntries.add(new WordEntry(word, hint));
+                wordEntries.add(new MainMenuView.WordEntry(word, hint));
             }
             wordField.clear();
             hintField.clear();
         }
     }
 
-    private void startEditing(WordEntry entry) {
+    private void startEditing(MainMenuView.WordEntry entry) {
         currentlyEditing = entry;
         wordField.setText(entry.word);
         hintField.setText(entry.hint);
@@ -196,15 +194,5 @@ public class ThemeCreatorView implements Initializable {
         Alert a = new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK);
         a.setHeaderText(null);
         a.showAndWait();
-    }
-
-    public static class WordEntry {
-        public String word;
-        public String hint = "";
-
-        public WordEntry(String word, String hint) {
-            this.word = word;
-            this.hint = hint != null ? hint : "";
-        }
     }
 }

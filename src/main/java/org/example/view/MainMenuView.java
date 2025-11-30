@@ -1,4 +1,4 @@
-package org.example;
+package org.example.view;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -13,8 +13,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
 
-import org.example.service.DatabaseService;
-import org.example.model.Crossword;
+import org.example.MainApp;
 
 public class MainMenuView implements Initializable {
 
@@ -27,7 +26,6 @@ public class MainMenuView implements Initializable {
 
     // Тимчасовий список слів (не зберігається в БД)
     private ObservableList<WordEntry> currentWords = FXCollections.observableArrayList();
-    private final DatabaseService db = new DatabaseService();
 
     private WordEntry currentlyEditing = null;
 
@@ -37,7 +35,7 @@ public class MainMenuView implements Initializable {
         updateWordCount();
 
         // Форматування списку
-        wordList.setCellFactory(lv -> new ListCell<WordEntry>() {
+        wordList.setCellFactory(lv -> new ListCell<>() {
             @Override
             protected void updateItem(WordEntry item, boolean empty) {
                 super.updateItem(item, empty);
@@ -50,7 +48,7 @@ public class MainMenuView implements Initializable {
 
         // При виборі теми — завантажуємо її слова
         themeComboBox.getSelectionModel().selectedItemProperty().addListener((obs, old, newTheme) -> {
-            if (newTheme != null && !newTheme.equals("<Порожній список>")) {
+            if (newTheme != null && !newTheme.equals("Обрати тему")) {
                 loadWordsFromTheme(newTheme);
             } else {
                 currentWords.clear();
@@ -73,7 +71,7 @@ public class MainMenuView implements Initializable {
                 if (selected != null) {
                     currentWords.remove(selected);
                     clearEditingState();
-                    // Не оновлюємо лічильник автоматично при видаленні
+                    updateWordCount();
                 }
             }
         });
@@ -85,7 +83,7 @@ public class MainMenuView implements Initializable {
 
     private void loadThemes() {
         themeComboBox.getItems().clear();
-        themeComboBox.getItems().add("<Порожній список>");
+        themeComboBox.getItems().add("Обрати тему");
 
         try (Connection conn = DriverManager.getConnection(
                 "jdbc:h2:~/javafx_h2_db;AUTO_SERVER=TRUE", "sa", "");
@@ -99,7 +97,7 @@ public class MainMenuView implements Initializable {
             showError("Не вдалося завантажити теми: " + e.getMessage());
         }
 
-        themeComboBox.getSelectionModel().selectFirst(); // <Порожній список>
+        themeComboBox.getSelectionModel().selectFirst(); // Обрати тему
     }
 
     private void loadWordsFromTheme(String themeName) {
@@ -194,7 +192,7 @@ public class MainMenuView implements Initializable {
             count = currentWords.size();
         }
 
-        // Просто передаємо дані — генерація буде на іншій сцені!
+        // передаємо дані
         MainApp.showCrosswordResult(new ArrayList<>(currentWords), count);
     }
 
@@ -204,7 +202,7 @@ public class MainMenuView implements Initializable {
         a.showAndWait();
     }
 
-    // Внутрішній клас — той самий, що в ThemeCreatorView
+    // Внутрішній клас
     public static class WordEntry {
         public String word;
         public String hint = "";

@@ -1,37 +1,36 @@
-package org.example;
+package org.example.model;
 
-import org.example.model.Crossword;
-
+import org.example.view.MainMenuView;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class CrosswordGenerator {
 
-    private int GRID_SIZE; // тепер буде змінюватись!
+    private int GRID_SIZE;
     private static final int MIN_GRID_SIZE = 10;
     private static final int MAX_GRID_SIZE = 50; // максимум, щоб не зависнути
+
     private char[][] grid;
-    private final List<MainMenuView.WordEntry> allWords;     // весь словник
-    private final int targetWordCount;                        // скільки треба в кросворді (maxWords)
+    private final List<MainMenuView.WordEntry> allWords;// весь словник
+    private final int targetWordCount;                  // скільки треба в кросворді (maxWords)
     private final List<Placement> placements = new ArrayList<>();
-    private final Set<String> usedWords = new HashSet<>();
-    private record Position(int row, int col, boolean horizontal, int intersections) {}    private record Placement(String word, String hint, int row, int col, boolean horizontal, int number) {}
+    private record Position(int row, int col, boolean horizontal, int intersections) {}
+    private record Placement(String word, String hint, int row, int col, boolean horizontal, int number) {}
 
     public static Crossword generate(List<MainMenuView.WordEntry> wordEntries, int maxWords) {
         return new CrosswordGenerator(wordEntries, maxWords).generate();
     }
 
     private CrosswordGenerator(List<MainMenuView.WordEntry> allWordsFromDb, int maxWords) {
-        this.allWords = new ArrayList<>(allWordsFromDb);  // весь словник
+        this.allWords = new ArrayList<>(allWordsFromDb);
         this.targetWordCount = maxWords;
 
-        // Сітка — як і раніше, під найдовше слово + запас
+        // Сітка під найдовше слово + запас
         int maxWordLength = allWords.stream()
                 .mapToInt(e -> e.word.length())
                 .max()
                 .orElse(10);
 
-        this.GRID_SIZE = Math.max(MIN_GRID_SIZE, Math.min(maxWordLength + 15, MAX_GRID_SIZE));
+        this.GRID_SIZE = Math.max(MIN_GRID_SIZE, Math.min(maxWordLength + 5, MAX_GRID_SIZE));
 
         this.grid = new char[GRID_SIZE][GRID_SIZE];
         for (char[] row : grid) Arrays.fill(row, '.');
@@ -48,7 +47,7 @@ public class CrosswordGenerator {
 
         int clueNumber = 1;
 
-        // === Розміщуємо перше слово по центру ===
+        // Розміщуємо перше слово по центру
         if (!sorted.isEmpty()) {
             MainMenuView.WordEntry first = sorted.get(0);
             String word = first.word.toUpperCase();
@@ -60,13 +59,12 @@ public class CrosswordGenerator {
 
             placeWord(word, row, col, true);
             placements.add(new Placement(word, first.hint, row, col, true, clueNumber++));
-            usedWords.add(word);
 
             // Видаляємо використане слово зі списку
             sorted.remove(0);
         }
 
-        // === Тепер запускаємо розумний бектрекінг ===
+        // бектрекінг
         Deque<MainMenuView.WordEntry> candidates = new ArrayDeque<>(sorted);
         Deque<MainMenuView.WordEntry> backup = new ArrayDeque<>();
 
@@ -147,7 +145,6 @@ public class CrosswordGenerator {
                               Deque<MainMenuView.WordEntry> backup,
                               int clueNumber) {
 
-        // УСПІХ: досягли потрібної кількості слів
         if (placements.size() >= targetWordCount) {
             return true;
         }
@@ -167,7 +164,7 @@ public class CrosswordGenerator {
 
         expandGridIfNeeded(word.length());
 
-        // Збираємо найкращі позиції (з максимумом перетинів)
+        // Збираємо найкращі позиції (максимумом перетинів)
         List<Position> positions = new ArrayList<>();
         for (int r = 0; r < GRID_SIZE; r++) {
             for (int c = 0; c < GRID_SIZE; c++) {
@@ -189,7 +186,6 @@ public class CrosswordGenerator {
         // Сортуємо: найкращі перетини — першими
         positions.sort((a, b) -> Integer.compare(b.intersections, a.intersections));
 
-        boolean tried = false;
         for (Position pos : positions) {
             placeWord(word, pos.row, pos.col, pos.horizontal);
             placements.add(new Placement(word, entry.hint, pos.row, pos.col, pos.horizontal, clueNumber));
@@ -201,10 +197,9 @@ public class CrosswordGenerator {
             // Бектрек
             removeWord(word, pos.row, pos.col, pos.horizontal);
             placements.remove(placements.size() - 1);
-            tried = true;
         }
 
-        // Якщо не влізло — кидаємо в резерв (спробуємо пізніше)
+        // Якщо не влізло — кидаємо в резерв
         backup.addLast(entry);
 
         // Повертаємо в кінець кандидатів, щоб не загубити
@@ -263,7 +258,7 @@ public class CrosswordGenerator {
                 // Якщо ця буква належить тільки цьому слову — стираємо
                 if (current == word.charAt(i)) {
                     // Перевіряємо, чи ця клітинка не є частиною іншого слова
-                    if (!isPartOfOtherWord(row, col + i, word)) {
+                    if (NotPartOfOtherWord(row, col + i, word)) {
                         grid[row][col + i] = '.';
                     }
                 }
@@ -272,7 +267,7 @@ public class CrosswordGenerator {
             for (int i = 0; i < word.length(); i++) {
                 char current = grid[row + i][col];
                 if (current == word.charAt(i)) {
-                    if (!isPartOfOtherWord(row + i, col, word)) {
+                    if (NotPartOfOtherWord(row + i, col, word)) {
                         grid[row + i][col] = '.';
                     }
                 }
@@ -280,25 +275,24 @@ public class CrosswordGenerator {
         }
     }
 
-    // Допоміжний метод: чи використовується ця клітинка іншими словами (крім поточного)
-    private boolean isPartOfOtherWord(int r, int c, String excludedWord) {
+    private boolean NotPartOfOtherWord(int r, int c, String excludedWord) {
         char ch = grid[r][c];
-        if (ch == '.' || ch == 0) return false;
+        if (ch == '.' || ch == 0) return true;
 
         for (Placement p : placements) {
             if (p.word.equals(excludedWord)) continue;
 
             if (p.horizontal) {
                 if (p.row == r && c >= p.col && c < p.col + p.word.length()) {
-                    if (p.word.charAt(c - p.col) == ch) return true;
+                    if (p.word.charAt(c - p.col) == ch) return false;
                 }
             } else {
                 if (p.col == c && r >= p.row && r < p.row + p.word.length()) {
-                    if (p.word.charAt(r - p.row) == ch) return true;
+                    if (p.word.charAt(r - p.row) == ch) return false;
                 }
             }
         }
-        return false;
+        return true;
     }
 
     private void expandGridIfNeeded(int requiredSize) {

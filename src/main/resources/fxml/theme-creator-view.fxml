@@ -13,43 +13,60 @@
 <GridPane alignment="CENTER_LEFT" hgap="20" vgap="10"
           xmlns="http://javafx.com/javafx/25"
           xmlns:fx="http://javafx.com/fxml/1"
-          fx:controller="org.example.ThemeCreatorView">
+          fx:controller="org.example.view.ThemeCreatorView">
 
     <columnConstraints>
-        <ColumnConstraints hgrow="SOMETIMES" percentWidth="50.0" />
-        <ColumnConstraints hgrow="SOMETIMES" percentWidth="50.0" />
+        <ColumnConstraints hgrow="SOMETIMES" percentWidth="50.0"/>
+        <ColumnConstraints hgrow="SOMETIMES" percentWidth="50.0"/>
     </columnConstraints>
 
     <rowConstraints>
-        <RowConstraints minHeight="10.0" vgrow="ALWAYS" />
+        <RowConstraints minHeight="10.0" vgrow="ALWAYS"/>
     </rowConstraints>
 
-    <children>
-        <VBox spacing="10" GridPane.columnIndex="0">
-            <children>
-                <TextField fx:id="themeNameField" maxWidth="Infinity" promptText="Назва теми" />
-                <TextField fx:id="wordField" maxWidth="Infinity" promptText="Введіть слово" />
-                <TextField fx:id="hintField" maxWidth="Infinity" promptText="Введіть підказку" />
-                <Button fx:id="addButton" onAction="#onAddWord" maxWidth="Infinity" text="Додати" />
-                <ListView fx:id="wordList" maxWidth="Infinity" VBox.vgrow="ALWAYS" />
-            </children>
-        </VBox>
-
-        <VBox alignment="CENTER" GridPane.columnIndex="1">
-            <children>
-                <Button onAction="#onBack" maxWidth="Infinity" style="-fx-background-color: #ccc;" text="Назад" />
-
-                <Region VBox.vgrow="ALWAYS" />
-
-                <Button fx:id="importButton" onAction="#onImport" maxWidth="Infinity" text="Імпортувати файл" />
-                <Region VBox.vgrow="ALWAYS" />
-
-                <Button onAction="#onSave" maxWidth="Infinity" style="-fx-background-color: #4CAF50; -fx-text-fill: white;" text="Зберегти" />
-            </children>
-        </VBox>
-    </children>
-
     <padding>
-        <Insets bottom="20" left="20" right="20" top="20" />
+        <Insets bottom="20" left="20" right="20" top="20"/>
     </padding>
+
+    <VBox spacing="10" GridPane.columnIndex="0">
+        <TextField fx:id="themeNameField"
+                   maxWidth="Infinity"
+                   promptText="Назва теми"/>
+
+        <TextField fx:id="wordField"
+                   maxWidth="Infinity"
+                   promptText="Введіть слово"/>
+
+        <TextField fx:id="hintField"
+                   maxWidth="Infinity"
+                   promptText="Введіть підказку"/>
+
+        <Button fx:id="addButton"
+                onAction="#onAddWord"
+                maxWidth="Infinity" text="Додати"/>
+
+        <ListView fx:id="wordList"
+                  maxWidth="Infinity"
+                  VBox.vgrow="ALWAYS"/>
+    </VBox>
+
+    <VBox alignment="CENTER" GridPane.columnIndex="1">
+        <Button onAction="#onBack"
+                maxWidth="Infinity"
+                style="-fx-background-color: #ccc;"
+                text="Назад"/>
+
+        <Region VBox.vgrow="ALWAYS"/>
+
+        <Button onAction="#onImport"
+                maxWidth="Infinity"
+                text="Імпортувати файл"/>
+
+        <Region VBox.vgrow="ALWAYS"/>
+
+        <Button onAction="#onSave"
+                maxWidth="Infinity"
+                style="-fx-background-color: #4CAF50; -fx-text-fill: white;"
+                text="Зберегти"/>
+    </VBox>
 </GridPane>

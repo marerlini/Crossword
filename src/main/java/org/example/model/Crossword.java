@@ -1,4 +1,3 @@
-// src/main/java/org/example/model/Crossword.java
 package org.example.model;
 
 import java.util.List;

@@ -13,76 +13,69 @@
 <GridPane alignment="CENTER_LEFT" hgap="20" vgap="10"
           xmlns="http://javafx.com/javafx/17.0.2"
           xmlns:fx="http://javafx.com/fxml/1"
-          fx:controller="org.example.CrosswordResultView">
+          fx:controller="org.example.view.CrosswordResultView">
 
     <columnConstraints>
-        <ColumnConstraints hgrow="SOMETIMES" percentWidth="50.0" />
-        <ColumnConstraints hgrow="SOMETIMES" percentWidth="50.0" />
+        <ColumnConstraints hgrow="SOMETIMES" percentWidth="50.0"/>
+        <ColumnConstraints hgrow="SOMETIMES" percentWidth="50.0"/>
     </columnConstraints>
 
     <rowConstraints>
-        <RowConstraints minHeight="10.0" vgrow="ALWAYS" />
+        <RowConstraints minHeight="10.0" vgrow="ALWAYS"/>
     </rowConstraints>
 
-    <children>
-        <VBox spacing="15" GridPane.columnIndex="0">
-            <children>
-
-                <!-- Сітка кросворду — тепер займає 60% висоти -->
-                <ScrollPane fx:id="crosswordScrollPane"
-                            fitToWidth="false"
-                            fitToHeight="false"
-                            pannable="true"
-                            VBox.vgrow="ALWAYS"
-                            prefHeight="600"
-                            maxHeight="800"
-                            minHeight="400"
-                            style="-fx-background: white; -fx-border-color: #aaa; -fx-border-width: 2;">
-                    <GridPane fx:id="crosswordGridPane"
-                              alignment="CENTER"
-                              hgap="2" vgap="2"
-                              style="-fx-background-color: white;" />
-                </ScrollPane>
-
-                <!-- Легенда (підказки) — тепер має багато місця -->
-                <TextArea fx:id="hintsArea"
-                          editable="false"
-                          wrapText="true"
-                          prefHeight="300"
-                          minHeight="200"
-                          maxHeight="500"
-                          promptText="Тут будуть підказки..."
-                          style="-fx-font-size: 14px;"
-                          VBox.vgrow="ALWAYS" />
-            </children>
-        </VBox>
-
-        <VBox alignment="CENTER" GridPane.columnIndex="1">
-            <children>
-                <Button onAction="#onBack" maxWidth="Infinity" style="-fx-background-color: #ccc;" text="Назад" />
-
-                <Region VBox.vgrow="ALWAYS" />
-
-                <Button fx:id="showAnswerButton" maxWidth="Infinity" text="Показати відповіді" onAction="#toggleAnswers"/>
-
-                <Region VBox.vgrow="ALWAYS" />
-
-                <Button fx:id="regenerateButton"
-                        maxWidth="Infinity"
-                        text="Перегенерувати"
-                        onAction="#regenerateCrossword" />
-
-                <Region VBox.vgrow="ALWAYS" />
-
-                <Button fx:id="savePdfButton"
-                        maxWidth="Infinity"
-                        text="Зберегти як PDF"
-                        onAction="#saveAsPdf"
-                        style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;" />            </children>
-        </VBox>
-    </children>
-
     <padding>
-        <Insets bottom="20" left="20" right="20" top="20" />
+        <Insets bottom="20" left="20" right="20" top="20"/>
     </padding>
+    <VBox spacing="15" GridPane.columnIndex="0">
+        <ScrollPane fx:id="crosswordScrollPane"
+                    pannable="true"
+                    VBox.vgrow="ALWAYS"
+                    prefHeight="600"
+                    maxHeight="800"
+                    minHeight="400"
+                    style="-fx-background: white; -fx-border-color: #aaa; -fx-border-width: 2;">
+            <GridPane fx:id="crosswordGridPane"
+                      alignment="CENTER"
+                      hgap="2" vgap="2"
+                      style="-fx-background-color: white;"/>
+        </ScrollPane>
+
+        <TextArea fx:id="hintsArea"
+                  editable="false"
+                  wrapText="true"
+                  prefHeight="300"
+                  minHeight="200"
+                  maxHeight="500"
+                  promptText="Тут будуть підказки..."
+                  style="-fx-font-size: 14px;"
+                  VBox.vgrow="ALWAYS"/>
+    </VBox>
+
+    <VBox alignment="CENTER" GridPane.columnIndex="1">
+        <Button onAction="#onBack"
+                maxWidth="Infinity"
+                style="-fx-background-color: #ccc;"
+                text="Назад"/>
+
+        <Region VBox.vgrow="ALWAYS"/>
+
+        <Button fx:id="showAnswerButton"
+                maxWidth="Infinity"
+                text="Показати відповіді"
+                onAction="#toggleAnswers"/>
+
+        <Region VBox.vgrow="ALWAYS"/>
+
+        <Button maxWidth="Infinity"
+                text="Перегенерувати"
+                onAction="#regenerateCrossword"/>
+
+        <Region VBox.vgrow="ALWAYS"/>
+
+        <Button maxWidth="Infinity"
+                text="Зберегти як PDF"
+                onAction="#saveAsPdf"
+                style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;"/>
+    </VBox>
 </GridPane>

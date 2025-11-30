@@ -10,13 +10,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.example.model.Crossword;
+import org.example.view.MainMenuView;
 
 public class MainApp extends Application {
 
     private static Stage primaryStage;
     private static List<MainMenuView.WordEntry> allWordsForGeneration;
     private static int wordsToUseCount;
+
     @Override
     public void start(Stage stage) throws IOException {
         primaryStage = stage;
@@ -53,10 +54,8 @@ public class MainApp extends Application {
         primaryStage.setScene(new Scene(root, 1200, 600));
     }
 
-
     public static void main(String[] args) {
         launch();
     }
-
 
 }
