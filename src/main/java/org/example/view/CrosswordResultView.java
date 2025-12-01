@@ -24,6 +24,7 @@ import javafx.stage.FileChooser;
 
 import org.apache.pdfbox.pdmodel.*;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
@@ -239,114 +240,205 @@ public class CrosswordResultView implements Initializable {
     @FXML
     private void saveAsPdf() {
         WritableImage snapshot = crosswordGridPane.snapshot(new SnapshotParameters(), null);
+        BufferedImage bImg = SwingFXUtils.fromFXImage(snapshot, null);
 
         FileChooser fc = new FileChooser();
         fc.setTitle("Зберегти кросворд як PDF");
         fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF (*.pdf)", "*.pdf"));
-        fc.setInitialFileName("Кросворд_" + LocalDate.now() + ".pdf");
+        fc.setInitialFileName("Кросворд_" + LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + ".pdf");
+
         File file = fc.showSaveDialog(crosswordGridPane.getScene().getWindow());
         if (file == null) return;
 
         try (PDDocument doc = new PDDocument()) {
-            PDPage page = new PDPage(PDRectangle.A4);
-            doc.addPage(page);
-            float width  = page.getMediaBox().getWidth();
-            float height = page.getMediaBox().getHeight();
+            PDImageXObject gridImage = PDImageXObject.createFromByteArray(doc, bufferedImageToBytes(bImg), "grid");
 
-            try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
+            PDType0Font boldFont = loadTtfFont(doc, "/fonts/Roboto-Bold.ttf");
+            PDType0Font regularFont = loadTtfFont(doc, "/fonts/Roboto-Regular.ttf");
 
-                // Сітка кросворду (максимум 520×520)
-                BufferedImage bImg = SwingFXUtils.fromFXImage(snapshot, null);
-                PDImageXObject img = PDImageXObject.createFromByteArray(doc, bufferedImageToBytes(bImg), "grid");
 
-                float maxGridSize = 520f;
-                float scale = Math.min(maxGridSize / img.getWidth(), maxGridSize / img.getHeight());
-                float imgW = img.getWidth()  * scale;
-                float imgH = img.getHeight() * scale;
+            // Розбиваємо підказки на два списки
+            List<String> across = new ArrayList<>();
+            List<String> down = new ArrayList<>();
+            boolean isAcross = true;
+            for (String line : hintsArea.getText().split("\n")) {
+                String t = line.trim();
+                if (t.startsWith("ПО ГОРИЗОНТАЛІ")) { isAcross = true; continue; }
+                if (t.startsWith("ПО ВЕРТИКАЛІ")) { isAcross = false; continue; }
+                if (!t.isEmpty()) {
+                    (isAcross ? across : down).add(t);
+                }
+            }
 
-                float gridX = (width - imgW) / 2;
-                float gridY = height - 100 - imgH;
+            // Параметри сторінки
+            float margin = 40f;
+            float pageWidth = PDRectangle.A4.getWidth();
+            float pageHeight = PDRectangle.A4.getHeight();
+            float usableWidth = pageWidth - 2 * margin;
+            float columnWidth = (usableWidth - 20) / 2;  // 20 — відступ між колонок
+            float leftX = margin;
+            float rightX = margin + columnWidth + 20;
 
-                cs.drawImage(img, gridX, gridY, imgW, imgH);
+            boolean firstPage = true;
+            List<String> leftColumn = across;
+            List<String> rightColumn = down;
 
-                // Шрифти з українською підтримкою
-                PDType0Font boldFont    = loadTtfFont(doc, "/fonts/Roboto-Bold.ttf");
-                PDType0Font regularFont = loadTtfFont(doc, "/fonts/Roboto-Regular.ttf");
+            while (!leftColumn.isEmpty() || !rightColumn.isEmpty()) {
+                PDPage page = new PDPage(PDRectangle.A4);
+                doc.addPage(page);
 
-                //Заголовок
-                cs.beginText();
-                cs.setFont(boldFont, 28);
-                cs.newLineAtOffset(width / 2 - 110, height - 60);
-                cs.showText("КРОСВОРД");
-                cs.endText();
+                try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
 
-                cs.beginText();
-                cs.setFont(regularFont, 12);
-                cs.newLineAtOffset(width / 2 - 80, height - 90);
-                cs.showText("Дата: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
-                cs.endText();
+                    if (firstPage) {
+                        // === Сітка тільки на першій сторінці ===
+                        float maxSize = 520f;
+                        float scale = Math.min(maxSize / gridImage.getWidth(), maxSize / gridImage.getHeight());
+                        float imgW = gridImage.getWidth() * scale;
+                        float imgH = gridImage.getHeight() * scale;
+                        float gridX = (pageWidth - imgW) / 2;
+                        float gridY = pageHeight - 120 - imgH;
 
-                // Підказки у дві колонки
-                String[] lines = hintsArea.getText().split("\n");
-                List<String> across = new ArrayList<>();
-                List<String> down   = new ArrayList<>();
+                        cs.drawImage(gridImage, gridX, gridY, imgW, imgH);
 
-                boolean isAcross = true;
-                for (String line : lines) {
-                    if (line.trim().startsWith("ПО ГОРИЗОНТАЛІ")) isAcross = true;
-                    else if (line.trim().startsWith("ПО ВЕРТИКАЛІ")) isAcross = false;
-                    else if (!line.trim().isEmpty()) {
-                        if (isAcross) across.add(line.trim());
-                        else          down.add(line.trim());
+                        // Заголовок
+                        cs.beginText();
+                        cs.setFont(boldFont, 28);
+                        cs.newLineAtOffset(pageWidth / 2 - 110, pageHeight - 70);
+                        cs.showText("КРОСВОРД");
+                        cs.endText();
+
+                        cs.beginText();
+                        cs.setFont(regularFont, 12);
+                        cs.newLineAtOffset(pageWidth / 2 - 100, pageHeight - 100);
+                        cs.showText("Дата: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
+                        cs.endText();
+
+                        // Початок підказок — нижче сітки
+                        float currentY = gridY - 40;
+
+                        // Заголовки колонок
+                        cs.beginText();
+                        cs.setFont(boldFont, 14);
+                        cs.newLineAtOffset(leftX, currentY);
+                        cs.showText("ПО ГОРИЗОНТАЛІ");
+                        cs.newLineAtOffset(rightX - leftX, 0);
+                        cs.showText("ПО ВЕРТИКАЛІ");
+                        cs.endText();
+
+                        currentY -= 30;
+
+                        // Друкуємо, скільки влізе
+                        float spaceBelow = currentY - 60; // залишок до низу сторінки
+                        float lineHeight = regularFont.getFontDescriptor().getCapHeight() / 1000 * 11 * 1.3f;
+
+                        int linesPerPage = (int) (spaceBelow / lineHeight);
+
+                        printCluesPortion(cs, regularFont, 11, leftX, rightX, currentY,
+                                columnWidth, leftColumn, rightColumn, linesPerPage);
+
+                        firstPage = false;
+                    } else {
+                        // === Наступні сторінки — тільки підказки ===
+                        float startY = pageHeight - 60;
+
+                        cs.beginText();
+                        cs.setFont(boldFont, 16);
+                        cs.newLineAtOffset(margin, startY);
+                        cs.showText("Продовження підказок");
+                        cs.endText();
+
+                        startY -= 40;
+
+                        int approxLines = (int) ((pageHeight - 100) / (11 * 1.3f));
+                        printCluesPortion(cs, regularFont, 11, leftX, rightX, startY,
+                                columnWidth, leftColumn, rightColumn, approxLines);
                     }
                 }
-
-                float col1X = 40;
-                float col2X = width / 2 + 20;
-                float startY = gridY - 40;
-                float leading = 14f;
-
-                cs.setFont(boldFont, 14);
-                cs.beginText();
-                cs.newLineAtOffset(col1X, startY);
-                cs.showText("ПО ГОРИЗОНТАЛІ");
-                cs.endText();
-
-                cs.beginText();
-                cs.newLineAtOffset(col2X, startY);
-                cs.showText("ПО ВЕРТИКАЛІ");
-                cs.endText();
-
-                cs.setFont(regularFont, 11);
-                cs.setLeading(leading);
-
-                // ліва колонка
-                cs.beginText();
-                cs.newLineAtOffset(col1X, startY - 25);
-                for (String s : across) {
-                    if (s.length() > 70) s = s.substring(0,67) + "…";
-                    cs.showText(s);
-                    cs.newLine();
-                }
-                cs.endText();
-
-                // права колонка
-                cs.beginText();
-                cs.newLineAtOffset(col2X, startY - 25);
-                for (String s : down) {
-                    if (s.length() > 70) s = s.substring(0,67) + "…";
-                    cs.showText(s);
-                    cs.newLine();
-                }
-                cs.endText();
             }
 
             doc.save(file);
 
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setContentText("Кросворд збережено у PDF" + (doc.getNumberOfPages() > 1 ? " (" + doc.getNumberOfPages() + " стор.)" : "") + "!");
+            alert.showAndWait();
+
         } catch (Exception ex) {
             ex.printStackTrace();
-            showError("Не вдалося зберегти PDF:\n" + ex.getMessage());
+            showError("Помилка збереження PDF:\n" + ex.getMessage());
         }
+    }
+
+    private void printCluesPortion(PDPageContentStream cs, PDFont font, float fontSize,
+                                   float leftX, float rightX, float startY,
+                                   float columnWidth,
+                                   List<String> leftList, List<String> rightList,
+                                   int maxLinesPerColumn) throws IOException {
+
+        float leading = fontSize * 1.3f;
+        cs.setLeading(leading);
+
+        // Ліва колонка
+        cs.beginText();
+        cs.setFont(font, fontSize);
+        cs.newLineAtOffset(leftX, startY);
+        int count = 0;
+        while (!leftList.isEmpty() && count < maxLinesPerColumn) {
+            String line = leftList.remove(0);
+            List<String> wrapped = wrapText(line, font, fontSize, columnWidth);
+            for (String part : wrapped) {
+                if (count >= maxLinesPerColumn) break;
+                cs.showText(part);
+                cs.newLine();
+                count++;
+            }
+        }
+        cs.endText();
+
+        // Права колонка
+        cs.beginText();
+        cs.setFont(font, fontSize);
+        cs.newLineAtOffset(rightX, startY);
+        count = 0;
+        while (!rightList.isEmpty() && count < maxLinesPerColumn) {
+            String line = rightList.remove(0);
+            List<String> wrapped = wrapText(line, font, fontSize, columnWidth);
+            for (String part : wrapped) {
+                if (count >= maxLinesPerColumn) break;
+                cs.showText(part);
+                cs.newLine();
+                count++;
+            }
+        }
+        cs.endText();
+    }
+
+    private List<String> wrapText(String text, PDFont font, float fontSize, float maxWidth) throws IOException {
+        List<String> lines = new ArrayList<>();
+        if (font.getStringWidth(text) / 1000 * fontSize <= maxWidth) {
+            lines.add(text);
+            return lines;
+        }
+
+        String[] words = text.split(" ");
+        StringBuilder current = new StringBuilder();
+
+        for (String word : words) {
+            String test = current.length() == 0 ? word : current + " " + word;
+            if (font.getStringWidth(test) / 1000 * fontSize > maxWidth) {
+                if (current.length() > 0) {
+                    lines.add(current.toString());
+                    current = new StringBuilder(word);
+                } else {
+                    lines.add(word); // слово довше за колонку
+                }
+            } else {
+                if (current.length() == 0) current.append(word);
+                else current.append(" ").append(word);
+            }
+        }
+        if (current.length() > 0) lines.add(current.toString());
+
+        return lines;
     }
 
     private byte[] bufferedImageToBytes(BufferedImage image) throws IOException {
