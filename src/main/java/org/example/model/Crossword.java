@@ -41,4 +41,23 @@ public class Crossword {
             this.isAcross = isAcross;
         }
     }
+    // Повертає true, якщо в цій клітинці закінчується якесь слово по горизонталі
+    public boolean isEndOfAcrossWord(int row, int col) {
+        if (getCell(row, col) == '.') return false;
+
+        return getAcrossClues().stream()
+                .anyMatch(clue -> clue.row == row &&
+                        clue.col <= col &&
+                        clue.col + clue.answer.length() - 1 == col);
+    }
+
+    // Повертає true, якщо в цій клітинці закінчується якесь слово по вертикалі
+    public boolean isEndOfDownWord(int row, int col) {
+        if (getCell(row, col) == '.') return false;
+
+        return getDownClues().stream()
+                .anyMatch(clue -> clue.col == col &&
+                        clue.row <= row &&
+                        clue.row + clue.answer.length() - 1 == row);
+    }
 }

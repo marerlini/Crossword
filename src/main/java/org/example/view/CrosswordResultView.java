@@ -19,6 +19,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 
@@ -154,10 +155,21 @@ public class CrosswordResultView implements Initializable {
                     Rectangle black = new Rectangle(cellSize, cellSize, Color.BLACK);
                     cell.getChildren().add(black);
                 } else {
+
+//                    біла клатинка
+                    boolean isEndOfWord = crossword.isEndOfAcrossWord(row, col) ||
+                            crossword.isEndOfDownWord(row, col);
+
                     Rectangle white = new Rectangle(cellSize, cellSize);
                     white.setFill(Color.WHITE);
-                    white.setStroke(Color.BLACK);
-                    white.setStrokeWidth(2);
+
+                    if (isEndOfWord) {
+                        white.setStroke(Color.NAVY);
+                    } else {
+                        white.setStroke(Color.BLACK);
+                    }
+
+                    white.setStrokeWidth(3);
 
                     // Літера
                     Label letter = new Label(String.valueOf(Character.toUpperCase(ch)));
