@@ -183,7 +183,6 @@ public class CrosswordGenerator {
             }
         }
 
-        // Сортуємо: найкращі перетини — першими
         positions.sort((a, b) -> Integer.compare(b.intersections, a.intersections));
 
         for (Position pos : positions) {
@@ -202,7 +201,6 @@ public class CrosswordGenerator {
         // Якщо не влізло — кидаємо в резерв
         backup.addLast(entry);
 
-        // Повертаємо в кінець кандидатів, щоб не загубити
         candidates.addFirst(entry);
 
         return false;
@@ -211,25 +209,51 @@ public class CrosswordGenerator {
     private boolean canPlace(String word, int row, int col, boolean horizontal) {
         if (horizontal) {
             if (col + word.length() > GRID_SIZE) return false;
+
+            // Перевірка кожної клітинки слова
             for (int i = 0; i < word.length(); i++) {
                 char existing = grid[row][col + i];
                 if (existing != '.' && existing != 0 && existing != word.charAt(i)) {
                     return false;
                 }
             }
-        } else {
+
+            // Перед першим символом (col-1) — має бути '.' або вихід за межі
+            if (col > 0 && grid[row][col - 1] != '.') {
+                return false;
+            }
+
+            // Після останнього символу (col + len) — має бути '.' або вихід за межі
+            int lastCol = col + word.length();
+            if (lastCol < GRID_SIZE && grid[row][lastCol] != '.') {
+                return false;
+            }
+
+        } else { // vertical
             if (row + word.length() > GRID_SIZE) return false;
+
             for (int i = 0; i < word.length(); i++) {
                 char existing = grid[row + i][col];
                 if (existing != '.' && existing != 0 && existing != word.charAt(i)) {
                     return false;
                 }
             }
+
+            // Перед першим символом (row-1, той самий стовпець)
+            if (row > 0 && grid[row - 1][col] != '.') {
+                return false;
+            }
+
+            // Після останнього символу (row + len, той самий стовпець)
+            int lastRow = row + word.length();
+            if (lastRow < GRID_SIZE && grid[lastRow][col] != '.') {
+                return false;
+            }
         }
         return true;
     }
 
-    // Рахує кількість перетинів (літер, які вже є в сітці і збігаються)
+    // Рахує кількість перетинів
     private int countIntersections(String word, int row, int col, boolean horizontal) {
         int count = 0;
         if (horizontal) {
@@ -250,7 +274,7 @@ public class CrosswordGenerator {
         return count;
     }
 
-    // Видаляємо слово (повертаємо клітинки в стан до розміщення)
+    // Видаляємо слово
     private void removeWord(String word, int row, int col, boolean horizontal) {
         if (horizontal) {
             for (int i = 0; i < word.length(); i++) {
@@ -298,7 +322,7 @@ public class CrosswordGenerator {
     private void expandGridIfNeeded(int requiredSize) {
         if (requiredSize <= GRID_SIZE) return;
 
-        int desired = requiredSize + 15; // запас побільше
+        int desired = requiredSize + 15;
         int newSize = Math.min(MAX_GRID_SIZE, Math.max(GRID_SIZE + 20, desired));
 
         if (newSize >= MAX_GRID_SIZE) {
